@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidad Activa Temuco</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>📍 Comunidad Activa Temuco</h1>
+        <p>Haz clic en el mapa para reportar un incidente en tu barrio.</p>
+    </header>
+
+    <div id="map"></div>
+
+    <div id="report-modal" class="modal-hidden">
+        <div class="modal-content">
+            <h2>Crear Nuevo Reporte</h2>
+            <p>Selecciona una categoría y añade una descripción.</p>
+            
+            <div class="category-buttons">
+                <button class="category-button" data-category="Vandalismo">
+                    <span class="icon">🎨</span> Vandalismo
+                </button>
+                <button class="category-button" data-category="Zona de Riesgo">
+                    <span class="icon">⚠️</span> Zona de Riesgo
+                </button>
+                <button class="category-button" data-category="Accidente">
+                    <span class="icon">🚗</span> Accidente
+                </button>
+                <button class="category-button" data-category="Luminaria">
+                    <span class="icon">💡</span> Luminaria
+                </button>
+                 <button class="category-button" data-category="Microbasural">
+                    <span class="icon">🗑️</span> Microbasural
+                </button>
+            </div>
+
+            <textarea id="report-description" placeholder="Añade una descripción (opcional)..."></textarea>
+            
+            <div class="modal-actions">
+                <button id="submit-report-btn" class="action-btn submit">Enviar Reporte</button>
+                <button id="cancel-report-btn" class="action-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://maps.googleapis.com/maps/api/js?AIzaSyBMS4wvV0guiacOdDhxELBPoeOIt_87o5g&callback=initMap&libraries=marker" async defer></script>
+    <script src="app.js"></script>
+</body>
+</html>
