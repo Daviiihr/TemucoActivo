@@ -138,3 +138,41 @@ textarea#report-description {
     background-color: #dc3545;
     color: white;
 }
+/* ===== ESTILOS PARA LOS FILTROS (NUEVO) ===== */
+.filter-container {
+    background-color: #ffffff;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap; /* Para que se adapte en pantallas pequeñas */
+}
+
+.filter-container span {
+    font-weight: bold;
+    color: #555;
+}
+
+.filter-btn {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background-color: #dee2e6;
+}
+
+/* Estilo para el botón de filtro que está ACTIVO */
+.filter-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}

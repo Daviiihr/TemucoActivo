@@ -10,12 +10,29 @@ const API_KEY = 'AIzaSyBMS4wvV0guiacOdDhxELBPoeOIt_87o5g';
 let map;
 let tempLocation = null;
 let selectedCategory = null;
+let allMarkers = [];
 const categoryColors = { 'Vandalismo': 'E85141', 'Zona de Riesgo': 'FFA500', 'Accidente': '4169E1', 'Luminaria': 'FBBC04', 'Microbasural': '964B00' };
 const modal = document.getElementById('report-modal');
 const categoryButtons = document.querySelectorAll('.category-button');
 const submitButton = document.getElementById('submit-report-btn');
 const cancelButton = document.getElementById('cancel-report-btn');
 const descriptionInput = document.getElementById('report-description');
+const filterButtons = document.querySelectorAll('.filter-btn');
+
+/**
+ * Filtra los marcadores en el mapa según la categoría seleccionada.
+ * @param {string} category - La categoría por la que filtrar. Si es "Todos", muestra todos.
+ */
+function filterMarkers(category) {
+    allMarkers.forEach(marker => {
+        // Si la categoría es "Todos" O si la categoría del marcador coincide con la del filtro
+        if (category === 'Todos' || marker.category === category) {
+            marker.setMap(map); // Muestra el marcador
+        } else {
+            marker.setMap(null); // Oculta el marcador
+        }
+    });
+}
 
 categoryButtons.forEach(button => button.addEventListener('click', () => {
     categoryButtons.forEach(btn => btn.classList.remove('selected'));
@@ -119,12 +136,28 @@ function createPermanentReport(location, category, description) {
     const marker = new google.maps.marker.AdvancedMarkerElement({
         position: location, map: map, title: `Reporte: ${category}`, content: pinGlyph.element,
     });
+    marker.category = category; // Guardamos la categoría en el marcador
+    allMarkers.push(marker); // Añadimos el marcador a la lista de todos los marcadores
     const infoWindowContent = `<div style="padding: 5px;"><h3 style="margin: 0 0 10px 0;">Reporte: ${category}</h3>${description ? `<p><strong>Descripción:</strong> ${description}</p>` : ''}<p style="font-size: 0.8em; color: grey;">Ubicación: ${location.lat().toFixed(4)}, ${location.lng().toFixed(4)}</p></div>`;
     const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
     marker.addListener('click', () => infoWindow.open(map, marker));
 }
 
 // ====== ASIGNACIÓN DE EVENT LISTENERS ======
+filterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        // Primero, quitamos la clase 'active' de todos los botones de filtro
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        // Luego, la añadimos al botón que fue presionado
+        button.classList.add('active');
+
+        // Obtenemos la categoría del atributo data-category del botón
+        const categoryToFilter = button.dataset.category;
+        // Llamamos a nuestra nueva función para filtrar los marcadores
+        filterMarkers(categoryToFilter);
+    });
+});
+
 categoryButtons.forEach(button => button.addEventListener('click', () => {
     categoryButtons.forEach(btn => btn.classList.remove('selected'));
     button.classList.add('selected');
