@@ -17,6 +17,43 @@ const submitButton = document.getElementById('submit-report-btn');
 const cancelButton = document.getElementById('cancel-report-btn');
 const descriptionInput = document.getElementById('report-description');
 
+categoryButtons.forEach(button => button.addEventListener('click', () => {
+    categoryButtons.forEach(btn => btn.classList.remove('selected'));
+    button.classList.add('selected');
+    selectedCategory = button.dataset.category;
+}));
+cancelButton.addEventListener('click', hideModal);
+
+submitButton.addEventListener('click', () => {
+    if (tempLocation && selectedCategory) {
+        // Si todo está correcto, creamos el reporte
+        createPermanentReport(tempLocation, selectedCategory, descriptionInput.value);
+        hideModal(); // Ocultamos el modal
+
+        // *** NUEVO: Mostramos una notificación de éxito ***
+        Toastify({
+            text: "✅ ¡Reporte enviado con éxito!",
+            duration: 3000, // Duración en milisegundos
+            gravity: "top", // `top` o `bottom`
+            position: "right", // `left`, `center` o `right`
+            style: {
+                background: "linear-gradient(to right, #00b09b, #96c93d)",
+            },
+        }).showToast();
+
+    } else {
+        // *** CAMBIO: Reemplazamos el alert() por una notificación de error ***
+        Toastify({
+            text: "❌ Por favor, selecciona una categoría para tu reporte.",
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            style: {
+                background: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            },
+        }).showToast();
+    }
+});
 // ====== LÓGICA DE CARGA ASÍNCRONA ======
 async function loadGoogleMapsAPI() {
     return new Promise((resolve, reject) => {
@@ -98,8 +135,6 @@ submitButton.addEventListener('click', () => {
     if (tempLocation && selectedCategory) {
         createPermanentReport(tempLocation, selectedCategory, descriptionInput.value);
         hideModal();
-    } else {
-        alert("Por favor, selecciona una categoría para tu reporte.");
     }
 });
 
