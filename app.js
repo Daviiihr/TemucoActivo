@@ -1,151 +1,118 @@
-// ====== VARIABLES GLOBALES ======
+// =================================================================
+//                 VERSIÓN DE DIAGNÓSTICO
+// =================================================================
+console.log("Paso 0: Script app.js iniciado.");
 
-let map; // Variable para el objeto Mapa de Google
-let tempLocation = null; // Almacena las coordenadas del último clic
-let selectedCategory = null; // Almacena la categoría seleccionada
+// Pon tu clave de API aquí.
+const API_KEY = 'AIzaSyBMS4wvV0guiacOdDhxELBPoeOIt_87o5g';
 
-// Mapeo de categorías a colores de marcadores para una mejor visualización
-const categoryColors = {
-    'Vandalismo': 'E85141',     // Rojo
-    'Zona de Riesgo': 'FFA500', // Naranja
-    'Accidente': '4169E1',      // Azul Royal
-    'Luminaria': 'FBBC04',      // Amarillo
-    'Microbasural': '964B00'   // Café
-};
-
-// ====== ELEMENTOS DEL DOM (para no buscarlos a cada rato) ======
+// ====== VARIABLES Y ELEMENTOS GLOBALES ======
+let map;
+let tempLocation = null;
+let selectedCategory = null;
+const categoryColors = { 'Vandalismo': 'E85141', 'Zona de Riesgo': 'FFA500', 'Accidente': '4169E1', 'Luminaria': 'FBBC04', 'Microbasural': '964B00' };
 const modal = document.getElementById('report-modal');
 const categoryButtons = document.querySelectorAll('.category-button');
 const submitButton = document.getElementById('submit-report-btn');
 const cancelButton = document.getElementById('cancel-report-btn');
 const descriptionInput = document.getElementById('report-description');
 
+// ====== LÓGICA DE CARGA ASÍNCRONA ======
+async function loadGoogleMapsAPI() {
+    return new Promise((resolve, reject) => {
+        if (typeof google !== 'undefined' && google.maps) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=marker`;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('No se pudo cargar el script de Google Maps.'));
+        document.head.appendChild(script);
+    });
+}
 
 // ====== FUNCIONES PRINCIPALES ======
-
-/**
- * Función de inicialización del mapa. Se ejecuta cuando la API de Google está lista.
- */
 function initMap() {
+    console.log("Paso 2: Función initMap() ejecutada.");
     const temucoCoords = { lat: -38.7359, lng: -72.5904 };
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 14,
         center: temucoCoords,
-        // Desactivamos los puntos de interés por defecto para no saturar el mapa
-        clickableIcons: false 
+        clickableIcons: false
     });
 
-    // Añade un listener para cuando el usuario hace clic en el mapa
+    console.log("Paso 3: Mapa creado. Añadiendo listener de clic...");
     map.addListener('click', handleMapClick);
 }
 
-/**
- * Maneja el evento de clic en el mapa.
- * @param {google.maps.MapMouseEvent} event - El evento del clic.
- */
 function handleMapClick(event) {
-    tempLocation = event.latLng; // Guarda la ubicación del clic
-    showModal(); // Muestra la ventana para crear el reporte
+    // ESTA ES LA PISTA MÁS IMPORTANTE
+    console.log("✅ ¡ÉXITO! Clic detectado en el mapa en:", event.latLng.toString());
+    tempLocation = event.latLng;
+    showModal();
 }
 
-/**
- * Muestra la ventana modal con una animación.
- */
 function showModal() {
+    console.log("Mostrando modal...");
     modal.classList.remove('modal-hidden');
-    // Forzamos un reflow para que la transición de opacidad funcione
-    setTimeout(() => {
-        modal.style.opacity = '1';
-    }, 10);
+    setTimeout(() => { modal.style.opacity = '1'; }, 10);
 }
 
-/**
- * Oculta la ventana modal y resetea su estado.
- */
 function hideModal() {
     modal.style.opacity = '0';
-    // Esperamos que termine la transición para ocultarlo con display:none
     setTimeout(() => {
         modal.classList.add('modal-hidden');
-        resetModal(); // Limpia el formulario para el próximo uso
+        resetModal();
     }, 300);
 }
 
-/**
- * Limpia el formulario del modal (quita selección, borra texto).
- */
 function resetModal() {
-    // Quita la clase 'selected' de todos los botones de categoría
     categoryButtons.forEach(btn => btn.classList.remove('selected'));
-    selectedCategory = null; // Resetea la categoría seleccionada
-    descriptionInput.value = ''; // Borra el texto del textarea
+    selectedCategory = null;
+    descriptionInput.value = '';
 }
 
-/**
- * Crea un marcador permanente en el mapa con la información del reporte.
- * @param {google.maps.LatLng} location - La ubicación del reporte.
- * @param {string} category - La categoría del reporte.
- * @param {string} description - La descripción adicional.
- */
 function createPermanentReport(location, category, description) {
-    const pinColor = categoryColors[category] || 'FE7569'; // Color por defecto si no encuentra la categoría
-    
-    // Creamos un ícono de pin personalizado con el color correspondiente
+    const pinColor = categoryColors[category] || 'FE7569';
     const pinGlyph = new google.maps.marker.PinElement({
-        glyph: "📍", // Puedes usar un emoji o un ícono de FontAwesome
-        glyphColor: "white",
-        background: `#${pinColor}`,
-        borderColor: "black",
+        glyph: "📍", glyphColor: "white", background: `#${pinColor}`, borderColor: "black",
     });
-
-    // Crea el marcador permanente
     const marker = new google.maps.marker.AdvancedMarkerElement({
-        position: location,
-        map: map,
-        title: `Reporte: ${category}`,
-        content: pinGlyph.element, // Usamos el pin personalizado como contenido
+        position: location, map: map, title: `Reporte: ${category}`, content: pinGlyph.element,
     });
-
-    // Crea la ventana de información que aparecerá al hacer clic en el marcador
-    const infoWindowContent = `
-        <div style="padding: 5px;">
-            <h3 style="margin: 0 0 10px 0;">Reporte: ${category}</h3>
-            ${description ? `<p><strong>Descripción:</strong> ${description}</p>` : ''}
-            <p style="font-size: 0.8em; color: grey;">Ubicación: ${location.lat().toFixed(4)}, ${location.lng().toFixed(4)}</p>
-        </div>
-    `;
+    const infoWindowContent = `<div style="padding: 5px;"><h3 style="margin: 0 0 10px 0;">Reporte: ${category}</h3>${description ? `<p><strong>Descripción:</strong> ${description}</p>` : ''}<p style="font-size: 0.8em; color: grey;">Ubicación: ${location.lat().toFixed(4)}, ${location.lng().toFixed(4)}</p></div>`;
     const infoWindow = new google.maps.InfoWindow({ content: infoWindowContent });
-
-    // Añade el listener para que la ventana se abra al hacer clic en el marcador
     marker.addListener('click', () => infoWindow.open(map, marker));
 }
 
-
-// ====== ASIGNACIÓN DE EVENT LISTENERS (se ejecuta una vez al cargar el script) ======
-
-// Añade un listener a cada botón de categoría
-categoryButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        // Primero, quita la selección de todos los demás botones
-        categoryButtons.forEach(btn => btn.classList.remove('selected'));
-        // Luego, añade la clase 'selected' al botón presionado
-        button.classList.add('selected');
-        // Guarda la categoría seleccionada
-        selectedCategory = button.dataset.category;
-    });
-});
-
-// Listener para el botón de "Cancelar"
+// ====== ASIGNACIÓN DE EVENT LISTENERS ======
+categoryButtons.forEach(button => button.addEventListener('click', () => {
+    categoryButtons.forEach(btn => btn.classList.remove('selected'));
+    button.classList.add('selected');
+    selectedCategory = button.dataset.category;
+}));
 cancelButton.addEventListener('click', hideModal);
-
-// Listener para el botón de "Enviar Reporte"
 submitButton.addEventListener('click', () => {
-    // Validamos que se haya guardado una ubicación y se haya seleccionado una categoría
     if (tempLocation && selectedCategory) {
-        const description = descriptionInput.value;
-        createPermanentReport(tempLocation, selectedCategory, description);
-        hideModal(); // Oculta el modal después de enviar
+        createPermanentReport(tempLocation, selectedCategory, descriptionInput.value);
+        hideModal();
     } else {
         alert("Por favor, selecciona una categoría para tu reporte.");
     }
 });
+
+// ====== FUNCIÓN DE ARRANQUE ======
+async function start() {
+    try {
+        await loadGoogleMapsAPI();
+        console.log("Paso 1: API de Google Maps cargada correctamente.");
+        initMap();
+    } catch (error) {
+        console.error("ERROR CRÍTICO:", error);
+        alert("No se pudo cargar Google Maps. Revisa la consola (F12) para ver el error.");
+    }
+}
+
+start();
