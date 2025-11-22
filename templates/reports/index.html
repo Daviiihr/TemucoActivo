@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>Comunidad Activa Temuco</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+    <header>
+        <h1>🧭 Comunidad Activa Temuco</h1>
+        <p>Haz clic en el mapa para reportar un incidente en tu barrio.</p>
+    </header>
+
+    <div class="filter-container">
+        <span>Filtrar por categoría:</span>
+        <button class="filter-btn active" data-category="Todos">Todos</button>
+        <button class="filter-btn" data-category="Vandalismo">🚨 Vandalismo</button>
+        <button class="filter-btn" data-category="Zona de Riesgo">⚠️ Zona de Riesgo</button>
+        <button class="filter-btn" data-category="Accidente">🚑 Accidente</button>
+        <button class="filter-btn" data-category="Luminaria">💡 Luminaria</button>
+        <button class="filter-btn" data-category="Microbasural">🗑️ Microbasural</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="report-modal" class="modal-hidden">
+        <div class="modal-content">
+            <h2>Crear Nuevo Reporte</h2>
+            <p>Selecciona una categoría y añade una descripción.</p>
+            
+            <div class="category-buttons">
+                <button class="category-button" data-category="Vandalismo"><span class="icon">🚨</span> Vandalismo</button>
+                <button class="category-button" data-category="Zona de Riesgo"><span class="icon">⚠️</span> Zona de Riesgo</button>
+                <button class="category-button" data-category="Accidente"><span class="icon">🚑</span> Accidente</button>
+                <button class="category-button" data-category="Luminaria"><span class="icon">💡</span> Luminaria</button>
+                <button class="category-button" data-category="Microbasural"><span class="icon">🗑️</span> Microbasural</button>
+            </div>
+
+            <textarea id="report-description" placeholder="Agrega una descripcion (opcional)..."></textarea>
+            
+            <div class="modal-actions">
+                <button id="submit-report-btn" class="action-btn submit">Enviar Reporte</button>
+                <button id="cancel-report-btn" class="action-btn cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.APP_CONFIG = {};
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+
+</body>
+</html>
