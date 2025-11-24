@@ -2,7 +2,6 @@
 import os
 import sys
 
-
 def main() -> None:
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "temucoactivo.settings")

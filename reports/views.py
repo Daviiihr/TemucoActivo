@@ -4,12 +4,19 @@ from decimal import Decimal, InvalidOperation
 from django.conf import settings
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 
 from .models import Report
 
+# Esto lo hice para el login, junto al redirect de arribita
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
+
+@login_required(login_url="/login/")
 def home(request):
     """Render the main incidents map."""
     context = {
@@ -71,3 +78,52 @@ def reports_api(request):
     )
 
     return JsonResponse({"report": serialize_report(report)}, status=201)
+
+
+
+# Mi logiiin
+
+
+def login_view(request):
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("reports:home")
+        else:
+            messages.error(request, "Usuario o contraseña incorrectos")
+
+    return render(request, "login.html")
+
+def logout_view(request):
+    logout(request)
+    return redirect("reports:login")
+
+
+def register_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        password2 = request.POST.get("password2")
+
+        if password != password2:
+            messages.error(request, "Las contraseñas no coinciden.")
+            return redirect("reports:register")
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "El usuario ya existe.")
+            return redirect("reports:register")
+
+        # Crear usuario
+        user = User.objects.create_user(username=username, password=password)
+        user.save()
+
+        messages.success(request, "Cuenta creada correctamente. Ahora puedes iniciar sesión.")
+        return redirect("reports:login")
+
+    return render(request, "register.html")
