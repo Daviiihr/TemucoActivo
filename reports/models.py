@@ -27,3 +27,4 @@ class Report(models.Model):
 
     def __str__(self) -> str:
         return f"{self.category} @ {self.latitude},{self.longitude}"
+
