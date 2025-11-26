@@ -9,50 +9,54 @@
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
 </head>
 <body>
 
-    <header class="d-flex flex-column align-items-center gap-2">
+    <header class="EncabezadoPrincipal d-flex flex-column align-items-center gap-2"> 
         <h1>Comunidad Activa Temuco</h1>
         <p>Haz clic en el mapa para reportar un incidente en tu barrio.</p>
         <h1>Bienvenido/a, {{ request.user.username }}</h1>
 
-        <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm">
+        <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm rounded-5">
             Cerrar sesión
         </a>
     </header>
 
-    <div class="filter-container">
+    <div class="ContenedorFiltro">
         <span>Filtrar por categoría:</span>
-        <button class="filter-btn active" data-category="Todos">Todos</button>
-        <button class="filter-btn" data-category="Vandalismo">🚨 Vandalismo</button>
-        <button class="filter-btn" data-category="Zona de Riesgo">⚠️ Zona de Riesgo</button>
-        <button class="filter-btn" data-category="Accidente">🚑 Accidente</button>
-        <button class="filter-btn" data-category="Luminaria">💡 Luminaria</button>
-        <button class="filter-btn" data-category="Microbasural">🗑️ Microbasural</button>
+        <button class="BotonFiltro activo" data-category="Todos">Todos</button>
+        <button class="BotonFiltro" data-category="Vandalismo">🚨 Vandalismo</button>
+        <button class="BotonFiltro" data-category="Zona de Riesgo">⚠️ Zona de Riesgo</button>
+        <button class="BotonFiltro" data-category="Accidente">🚑 Accidente</button>
+        <button class="BotonFiltro" data-category="Luminaria">💡 Luminaria</button>
+        <button class="BotonFiltro" data-category="Microbasural">🗑️ Microbasural</button>
     </div>
 
     <div id="map"></div>
 
-    <div id="report-modal" class="modal-hidden">
-        <div class="modal-content">
+    <div id="report-modal" class="ModalOculto">
+        <div class="ContenidoModal">
             <h2>Crear Nuevo Reporte</h2>
             <p>Selecciona una categoría y añade una descripción.</p>
             
-            <div class="category-buttons">
-                <button class="category-button" data-category="Vandalismo"><span class="icon">🚨</span> Vandalismo</button>
-                <button class="category-button" data-category="Zona de Riesgo"><span class="icon">⚠️</span> Zona de Riesgo</button>
-                <button class="category-button" data-category="Accidente"><span class="icon">🚑</span> Accidente</button>
-                <button class="category-button" data-category="Luminaria"><span class="icon">💡</span> Luminaria</button>
-                <button class="category-button" data-category="Microbasural"><span class="icon">🗑️</span> Microbasural</button>
+            <div class="ContenedorBotonesCategoria">
+                <button class="BotonCategoria" data-category="Vandalismo"><span class="Icono">🚨</span> Vandalismo</button>
+                <button class="BotonCategoria" data-category="Zona de Riesgo"><span class="Icono">⚠️</span> Zona de Riesgo</button>
+                <button class="BotonCategoria" data-category="Accidente"><span class="Icono">🚑</span> Accidente</button>
+                <button class="BotonCategoria" data-category="Luminaria"><span class="Icono">💡</span> Luminaria</button>
+                <button class="BotonCategoria" data-category="Microbasural"><span class="Icono">🗑️</span> Microbasural</button>
             </div>
 
             <textarea id="report-description" placeholder="Agrega una descripcion (opcional)..."></textarea>
             
-            <div class="modal-actions">
-                <button id="submit-report-btn" class="action-btn submit">Enviar Reporte</button>
-                <button id="cancel-report-btn" class="action-btn cancel">Cancelar</button>
+            <div class="AccionesModal">
+                <button id="submit-report-btn" class="BotonAccion Enviar">Enviar Reporte</button>
+                <button id="cancel-report-btn" class="BotonAccion Cancelar">Cancelar</button>
             </div>
         </div>
     </div>
