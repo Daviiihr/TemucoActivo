@@ -6,7 +6,8 @@ body {
     color: #333;
 }
 
-header {
+/* Nuevo Nombre: EncabezadoPrincipal */
+.EncabezadoPrincipal {
     background-color: #007bff;
     color: white;
     padding: 1rem 2rem;
@@ -14,7 +15,7 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-header h1 {
+.EncabezadoPrincipal h1 {
     margin: 0;
 }
 
@@ -28,7 +29,8 @@ header h1 {
     z-index: 100;
 }
 
-.modal-hidden {
+/* Nuevo Nombre: ModalOculto */
+.ModalOculto {
     display: none;
 }
 
@@ -48,11 +50,12 @@ header h1 {
     pointer-events: none;
 }
 
-#report-modal:not(.modal-hidden) {
+#report-modal:not(.ModalOculto) {
     pointer-events: auto;
 }
 
-.modal-content {
+/* Nuevo Nombre: ContenidoModal */
+.ContenidoModal {
     background: white;
     padding: 2rem;
     border-radius: 8px;
@@ -62,11 +65,12 @@ header h1 {
     text-align: center;
 }
 
-.modal-content h2 {
+.ContenidoModal h2 {
     margin-top: 0;
 }
 
-.category-buttons {
+/* Nuevo Nombre: ContenedorBotonesCategoria */
+.ContenedorBotonesCategoria {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -74,7 +78,8 @@ header h1 {
     margin-bottom: 1.5rem;
 }
 
-.category-button {
+/* Nuevo Nombre: BotonCategoria */
+.BotonCategoria {
     background-color: #f0f0f0;
     border: 2px solid #ddd;
     border-radius: 20px;
@@ -87,12 +92,12 @@ header h1 {
     gap: 8px;
 }
 
-.category-button:hover {
+.BotonCategoria:hover {
     border-color: #007bff;
     background-color: #e9efff;
 }
 
-.category-button.selected {
+.BotonCategoria.selected {
     background-color: #007bff;
     color: white;
     border-color: #0056b3;
@@ -109,13 +114,15 @@ textarea#report-description {
     box-sizing: border-box;
 }
 
-.modal-actions {
+/* Nuevo Nombre: AccionesModal */
+.AccionesModal {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
 }
 
-.action-btn {
+/* Nuevo Nombre: BotonAccion, con modificadores Enviar y Cancelar */
+.BotonAccion {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
@@ -124,17 +131,18 @@ textarea#report-description {
     font-weight: bold;
 }
 
-.action-btn.submit {
+.BotonAccion.Enviar {
     background-color: #28a745;
     color: white;
 }
 
-.action-btn.cancel {
+.BotonAccion.Cancelar {
     background-color: #dc3545;
     color: white;
 }
 
-.filter-container {
+/* Nuevo Nombre: ContenedorFiltro */
+.ContenedorFiltro {
     background-color: #ffffff;
     padding: 15px;
     text-align: center;
@@ -146,12 +154,13 @@ textarea#report-description {
     flex-wrap: wrap;
 }
 
-.filter-container span {
+.ContenedorFiltro span {
     font-weight: bold;
     color: #555;
 }
 
-.filter-btn {
+/* Nuevo Nombre: BotonFiltro */
+.BotonFiltro {
     background-color: #e9ecef;
     border: 1px solid #ced4da;
     border-radius: 20px;
@@ -161,11 +170,11 @@ textarea#report-description {
     transition: all 0.2s ease;
 }
 
-.filter-btn:hover {
+.BotonFiltro:hover {
     background-color: #dee2e6;
 }
 
-.filter-btn.active {
+.BotonFiltro.activo {
     background-color: #007bff;
     color: white;
     border-color: #007bff;

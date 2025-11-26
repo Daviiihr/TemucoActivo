@@ -10,16 +10,18 @@ const categoryColors = {
     "Zona de Riesgo": "#FFA500",
     Accidente: "#4169E1",
     Luminaria: "#FBBC04",
-    Microbasural: "#964B00",
+    Microbasural: "#964B00",    
 };
 const allMarkers = [];
 
 const modal = document.getElementById("report-modal");
-const categoryButtons = document.querySelectorAll(".category-button");
+// ✅ Selector corregido a clase en español
+const categoryButtons = document.querySelectorAll(".BotonCategoria");
 const submitButton = document.getElementById("submit-report-btn");
 const cancelButton = document.getElementById("cancel-report-btn");
 const descriptionInput = document.getElementById("report-description");
-const filterButtons = document.querySelectorAll(".filter-btn");
+// ✅ Selector corregido a clase en español
+const filterButtons = document.querySelectorAll(".BotonFiltro");
 
 function initMap() {
     const temucoCoords = [-38.7359, -72.5904];
@@ -41,7 +43,8 @@ function handleMapClick(event) {
 
 function showModal() {
     if (!modal) return;
-    modal.classList.remove("modal-hidden");
+    // ✅ Clase de visibilidad corregida a español
+    modal.classList.remove("ModalOculto");
     setTimeout(() => {
         modal.style.opacity = "1";
         if (descriptionInput) {
@@ -54,12 +57,14 @@ function hideModal() {
     if (!modal) return;
     modal.style.opacity = "0";
     setTimeout(() => {
-        modal.classList.add("modal-hidden");
+        // ✅ Clase de visibilidad corregida a español
+        modal.classList.add("ModalOculto");
         resetModal();
     }, 300);
 }
 
 function resetModal() {
+    // ✅ Clase de estado activo del botón de categoría se mantiene en inglés
     categoryButtons.forEach((btn) => btn.classList.remove("selected"));
     selectedCategory = null;
     if (descriptionInput) {
@@ -103,8 +108,10 @@ function filterMarkers(category) {
 }
 
 function setupEventListeners() {
+    // === Botones de Categoría (Modal) ===
     categoryButtons.forEach((button) => {
         button.addEventListener("click", () => {
+            // ✅ Clase de estado activo del botón de categoría se mantiene en inglés
             categoryButtons.forEach((btn) => btn.classList.remove("selected"));
             button.classList.add("selected");
             selectedCategory = button.dataset.category;
@@ -163,10 +170,12 @@ function setupEventListeners() {
         });
     }
 
+    // === Botones de Filtro ===
     filterButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            filterButtons.forEach((btn) => btn.classList.remove("active"));
-            button.classList.add("active");
+            // ✅ Clase de estado activo del botón de filtro corregida a español
+            filterButtons.forEach((btn) => btn.classList.remove("activo"));
+            button.classList.add("activo");
             const categoryToFilter = button.dataset.category;
             filterMarkers(categoryToFilter);
         });
