@@ -1,0 +1,39 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Entornos virtuales ---
+venv/
+env/
+.venv/
+
+# --- Archivos de configuración sensibles ---
+.env
+*.env
+
+# --- Django ---
+*.log
+*.pot
+*.pyc
+
+# Base de datos local
+db.sqlite3
+
+# Archivos de migraciones (OPCIONAL)
+# Si no quieres versionarlas, descomenta esta línea:
+#migrations/
+
+# --- Archivos estáticos ---
+# Si generas collectstatic en producción, ignora la carpeta generada:
+staticfiles/
+
+# --- Sistema / OS ---
+.DS_Store
+Thumbs.db
+
+# --- VSCode ---
+.vscode/
+
+# --- Otros ---
+*.ps1
