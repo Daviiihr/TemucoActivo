@@ -10,17 +10,19 @@ const categoryColors = {
     "Zona de Riesgo": "#FFA500",
     Accidente: "#4169E1",
     Luminaria: "#FBBC04",
-    Microbasural: "#964B00",    
+    Microbasural: "#964B00",
 };
 const allMarkers = [];
 
 const modal = document.getElementById("report-modal");
-// ✅ Selector corregido a clase en español
 const categoryButtons = document.querySelectorAll(".BotonCategoria");
 const submitButton = document.getElementById("submit-report-btn");
 const cancelButton = document.getElementById("cancel-report-btn");
 const descriptionInput = document.getElementById("report-description");
-// ✅ Selector corregido a clase en español
+const streetNameInput = document.getElementById("street-name");
+const streetNumberInput = document.getElementById("street-number");
+const apartmentInput = document.getElementById("apartment");
+const addressExtraInput = document.getElementById("address-extra");
 const filterButtons = document.querySelectorAll(".BotonFiltro");
 
 function initMap() {
@@ -36,14 +38,14 @@ function initMap() {
     map.on("click", handleMapClick);
 }
 
-function handleMapClick(event) {
+async function handleMapClick(event) {
     tempLocation = event.latlng;
     showModal();
+    await autofillAddressFromMap(event.latlng);
 }
 
 function showModal() {
     if (!modal) return;
-    // ✅ Clase de visibilidad corregida a español
     modal.classList.remove("ModalOculto");
     setTimeout(() => {
         modal.style.opacity = "1";
@@ -57,24 +59,91 @@ function hideModal() {
     if (!modal) return;
     modal.style.opacity = "0";
     setTimeout(() => {
-        // ✅ Clase de visibilidad corregida a español
         modal.classList.add("ModalOculto");
         resetModal();
     }, 300);
 }
 
 function resetModal() {
-    // ✅ Clase de estado activo del botón de categoría se mantiene en inglés
     categoryButtons.forEach((btn) => btn.classList.remove("selected"));
     selectedCategory = null;
-    if (descriptionInput) {
-        descriptionInput.value = "";
-    }
+    setAddressFields({});
+    if (descriptionInput) descriptionInput.value = "";
     tempLocation = null;
 }
 
-function createPermanentReport(location, category, description) {
-    const pinColor = categoryColors[category] || "#FE7569";
+function setAddressFields(address) {
+    if (streetNameInput) streetNameInput.value = address.street_name || "";
+    if (streetNumberInput) streetNumberInput.value = address.street_number || "";
+    if (apartmentInput) apartmentInput.value = address.apartment || "";
+    if (addressExtraInput) addressExtraInput.value = address.address_extra || "";
+}
+
+function formatAddress(report) {
+    const addressParts = [];
+    if (report.street_name) {
+        const streetLine = `${report.street_name}${report.street_number ? " " + report.street_number : ""}`;
+        addressParts.push(streetLine.trim());
+    }
+    if (report.apartment) {
+        addressParts.push(`Depto/Bloque: ${report.apartment}`);
+    }
+    if (report.address_extra) {
+        addressParts.push(report.address_extra);
+    }
+    return addressParts.join(" \u00b7 ");
+}
+
+async function reverseGeocode(latlng) {
+    const url =
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`;
+    const response = await fetch(url, {
+        headers: { "User-Agent": "temucoactivo/1.0" },
+    });
+    if (!response.ok) {
+        throw new Error(`Estado ${response.status}`);
+    }
+    const data = await response.json();
+    const addr = data.address || {};
+    return {
+        street_name: addr.road || addr.pedestrian || addr.cycleway || "",
+        street_number: addr.house_number || "",
+        apartment: "",
+        address_extra:
+            addr.neighbourhood ||
+            addr.suburb ||
+            addr.village ||
+            addr.town ||
+            addr.city ||
+            addr.state ||
+            "",
+    };
+}
+
+async function autofillAddressFromMap(latlng) {
+    // Limpia los campos mientras buscamos la direccion
+    setAddressFields({});
+    const currentClick = { ...latlng };
+    try {
+        const address = await reverseGeocode(latlng);
+        // Si el usuario hizo otro click mientras tanto, no sobreescribimos
+        if (tempLocation && tempLocation.lat === currentClick.lat && tempLocation.lng === currentClick.lng) {
+            setAddressFields(address);
+        }
+    } catch (error) {
+        console.warn("No se pudo autocompletar la direccion:", error);
+        Toastify({
+            text: "\u26a0 No pudimos obtener la direccion automaticamente. Puedes escribirla manualmente.",
+            duration: 3500,
+            gravity: "top",
+            position: "right",
+            style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" },
+        }).showToast();
+    }
+}
+
+function createPermanentReport(location, report) {
+    const pinColor = categoryColors[report.category] || "#FE7569";
     const marker = L.circleMarker(location, {
         radius: 9,
         color: "#000",
@@ -83,15 +152,17 @@ function createPermanentReport(location, category, description) {
         fillOpacity: 0.9,
     }).addTo(map);
 
-    marker.category = category;
+    marker.category = report.category;
     allMarkers.push(marker);
 
+    const addressText = formatAddress(report);
     const popupHtml = `
         <div style="padding: 5px;">
-            <h3 style="margin: 0 0 10px 0;">Reporte: ${category}</h3>
-            ${description ? `<p><strong>Descripción:</strong> ${description}</p>` : ""}
+            <h3 style="margin: 0 0 10px 0;">Reporte: ${report.category}</h3>
+            ${addressText ? `<p><strong>Direccion:</strong> ${addressText}</p>` : ""}
+            ${report.description ? `<p><strong>Descripcion:</strong> ${report.description}</p>` : ""}
             <p style="font-size: 0.8em; color: grey;">
-                Ubicación: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}
+                Ubicacion: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}
             </p>
         </div>`;
     marker.bindPopup(popupHtml);
@@ -108,10 +179,9 @@ function filterMarkers(category) {
 }
 
 function setupEventListeners() {
-    // === Botones de Categoría (Modal) ===
+    // === Botones de Categoria (Modal) ===
     categoryButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            // ✅ Clase de estado activo del botón de categoría se mantiene en inglés
             categoryButtons.forEach((btn) => btn.classList.remove("selected"));
             button.classList.add("selected");
             selectedCategory = button.dataset.category;
@@ -128,20 +198,20 @@ function setupEventListeners() {
                 try {
                     const payload = {
                         category: selectedCategory,
-                        description: descriptionInput?.value ?? "",
+                        description: (descriptionInput?.value || "").trim(),
+                        street_name: (streetNameInput?.value || "").trim(),
+                        street_number: (streetNumberInput?.value || "").trim(),
+                        apartment: (apartmentInput?.value || "").trim(),
+                        address_extra: (addressExtraInput?.value || "").trim(),
                         lat: tempLocation.lat,
                         lng: tempLocation.lng,
                     };
                     const savedReport = await saveReport(payload);
                     const savedLocation = L.latLng(savedReport.lat, savedReport.lng);
-                    createPermanentReport(
-                        savedLocation,
-                        savedReport.category,
-                        savedReport.description || ""
-                    );
+                    createPermanentReport(savedLocation, savedReport);
                     hideModal();
                     Toastify({
-                        text: "✅ ¡Reporte enviado con éxito!",
+                        text: "\u2714 Reporte enviado con exito!",
                         duration: 3000,
                         gravity: "top",
                         position: "right",
@@ -150,7 +220,7 @@ function setupEventListeners() {
                 } catch (error) {
                     Toastify({
                         text:
-                            "⚠️ No se pudo guardar el reporte. Intenta nuevamente. " +
+                            "\u26a0 No se pudo guardar el reporte. Intenta nuevamente. " +
                             (error?.message || ""),
                         duration: 4000,
                         gravity: "top",
@@ -160,7 +230,7 @@ function setupEventListeners() {
                 }
             } else {
                 Toastify({
-                    text: "⚠️ Selecciona una categoría para tu reporte.",
+                    text: "\u26a0 Selecciona una categoria para tu reporte.",
                     duration: 3000,
                     gravity: "top",
                     position: "right",
@@ -173,7 +243,6 @@ function setupEventListeners() {
     // === Botones de Filtro ===
     filterButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            // ✅ Clase de estado activo del botón de filtro corregida a español
             filterButtons.forEach((btn) => btn.classList.remove("activo"));
             button.classList.add("activo");
             const categoryToFilter = button.dataset.category;
@@ -191,7 +260,7 @@ async function loadExistingReports() {
         const data = await response.json();
         (data.reports || []).forEach((report) => {
             const loc = L.latLng(report.lat, report.lng);
-            createPermanentReport(loc, report.category, report.description || "");
+            createPermanentReport(loc, report);
         });
     } catch (error) {
         console.warn("No se pudieron cargar los reportes iniciales:", error);
@@ -230,7 +299,7 @@ async function start() {
         await loadExistingReports();
     } catch (error) {
         console.error("Error al cargar el mapa:", error);
-        alert("No se pudo cargar el mapa. Revisa la consola (F12) para más detalles.");
+        alert("No se pudo cargar el mapa. Revisa la consola (F12) para mas detalles.");
     }
 }
 
