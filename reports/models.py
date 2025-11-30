@@ -18,6 +18,10 @@ class Report(models.Model):
 
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     description = models.TextField(blank=True)
+    street_name = models.CharField(max_length=120, blank=True)
+    street_number = models.CharField(max_length=20, blank=True)
+    apartment = models.CharField(max_length=50, blank=True)
+    address_extra = models.CharField(max_length=120, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,5 +30,7 @@ class Report(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
+        if self.street_name:
+            address = f"{self.street_name} {self.street_number}".strip()
+            return f"{self.category} @ {address}"
         return f"{self.category} @ {self.latitude},{self.longitude}"
-
