@@ -74,7 +74,7 @@ else:
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'temuco_activo',                          # ¡El nombre que acabas de crear!
         'USER': 'postgres',                       # El usuario por defecto
-        'PASSWORD': 'gabo2005', # <--- ¡PON TU CONTRASEÑA AQUÍ!
+        'PASSWORD': 'gabo2005', 
         'HOST': 'localhost',                      # Tu PC
         'PORT': '5432',                           # Puerto por defecto
     }
