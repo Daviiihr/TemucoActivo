@@ -22,9 +22,19 @@
         <p>Haz clic en el mapa para reportar un incidente en tu barrio.</p>
         <h1>Bienvenido/a, {{ request.user.username }}</h1>
 
-        <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm rounded-5">
-            Cerrar sesion
-        </a>
+        <div class="d-flex gap-2">
+            {% if request.user.is_staff %}
+            <a href="{% url 'reports:zones_admin' %}" class="btn btn-warning btn-sm rounded-5">
+                Gestionar macro-zonas
+            </a>
+            {% endif %}
+            <a href="{% url 'reports:reports_sql_summary' %}" class="btn btn-light btn-sm rounded-5">
+                Ver consultas SQL
+            </a>
+            <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm rounded-5">
+                Cerrar sesion
+            </a>
+        </div>
     </header>
 
     <div class="ContenedorFiltro">
@@ -43,6 +53,7 @@
         <div class="ContenidoModal">
             <h2>Crear Nuevo Reporte</h2>
             <p>Selecciona una categoria, agrega direccion y descripcion.</p>
+            <div id="zone-info" class="zone-info text-muted small mb-2" aria-live="polite"></div>
             
             <div class="ContenedorBotonesCategoria">
                 <button class="BotonCategoria" data-category="Vandalismo"><span class="Icono">&#x1F9F1;</span> Vandalismo</button>
@@ -77,7 +88,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/app.js' %}?v=zones3"></script>
 
 </body>
 </html>

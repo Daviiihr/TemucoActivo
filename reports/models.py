@@ -1,6 +1,22 @@
 from django.db import models
 
 
+class Zone(models.Model):
+    """Macro-zonas definidas por admin (polígono GeoJSON)."""
+
+    name = models.CharField(max_length=100, unique=True)
+    color = models.CharField(max_length=20, default="#1e88e5")
+    geojson = models.JSONField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Report(models.Model):
     CATEGORY_VANDALISM = "Vandalismo"
     CATEGORY_RISK = "Zona de Riesgo"
@@ -17,6 +33,9 @@ class Report(models.Model):
     ]
 
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    zone = models.ForeignKey(
+        Zone, null=True, blank=True, on_delete=models.SET_NULL, related_name="reports"
+    )
     description = models.TextField(blank=True)
     street_name = models.CharField(max_length=120, blank=True)
     street_number = models.CharField(max_length=20, blank=True)

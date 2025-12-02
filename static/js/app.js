@@ -1,4 +1,5 @@
 const REPORTS_API_URL = "/api/reports/";
+const ZONES_API_URL = "/api/zones/";
 const CSRF_TOKEN =
     document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
 
@@ -15,6 +16,7 @@ const categoryColors = {
 const allMarkers = [];
 
 const modal = document.getElementById("report-modal");
+const zonesLayerGroup = L.layerGroup();
 const categoryButtons = document.querySelectorAll(".BotonCategoria");
 const submitButton = document.getElementById("submit-report-btn");
 const cancelButton = document.getElementById("cancel-report-btn");
@@ -24,6 +26,54 @@ const streetNumberInput = document.getElementById("street-number");
 const apartmentInput = document.getElementById("apartment");
 const addressExtraInput = document.getElementById("address-extra");
 const filterButtons = document.querySelectorAll(".BotonFiltro");
+const zoneInfoEl = document.getElementById("zone-info");
+
+function pointInRing(point, ring) {
+    const [x, y] = point;
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i];
+        const [xj, yj] = ring[j];
+        const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi + 1e-12) + xi;
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+function pointInPolygon(point, coordinates) {
+    if (!coordinates || !coordinates.length) return false;
+    const outer = coordinates[0];
+    return pointInRing(point, outer);
+}
+
+function findZoneForLatLng(latlng) {
+    if (!window.APP_ZONES) return null;
+    const point = [latlng.lng, latlng.lat];
+    for (const zone of window.APP_ZONES) {
+        const geo = zone.geojson || {};
+        const geometry = geo.geometry ? geo.geometry : geo;
+        if (!geometry) continue;
+        const type = geometry.type;
+        const coords = geometry.coordinates;
+        if (type === "Polygon" && pointInPolygon(point, coords)) return zone;
+        if (type === "MultiPolygon") {
+            for (const poly of coords || []) {
+                if (pointInPolygon(point, poly)) return zone;
+            }
+        }
+    }
+    return null;
+}
+
+function updateZoneInfo(latlng) {
+    if (!zoneInfoEl || !latlng) return;
+    const zone = findZoneForLatLng(latlng);
+    if (zone) {
+        zoneInfoEl.innerHTML = `<span class="zone-chip">Zona: ${zone.name}</span>`;
+    } else {
+        zoneInfoEl.innerHTML = `<span class="zone-chip" style="background:#f8f9fa; border-color:#dee2e6; color:#6c757d;">Fuera de macro-zona</span>`;
+    }
+}
 
 function initMap() {
     const temucoCoords = [-38.7359, -72.5904];
@@ -36,10 +86,12 @@ function initMap() {
     }).addTo(map);
 
     map.on("click", handleMapClick);
+    zonesLayerGroup.addTo(map);
 }
 
 async function handleMapClick(event) {
     tempLocation = event.latlng;
+    updateZoneInfo(event.latlng);
     showModal();
     await autofillAddressFromMap(event.latlng);
 }
@@ -90,6 +142,9 @@ function formatAddress(report) {
     }
     if (report.address_extra) {
         addressParts.push(report.address_extra);
+    }
+    if (report.zone_name) {
+        addressParts.push(`Zona: ${report.zone_name}`);
     }
     return addressParts.join(" \u00b7 ");
 }
@@ -267,6 +322,39 @@ async function loadExistingReports() {
     }
 }
 
+async function loadZones() {
+    try {
+        const response = await fetch(ZONES_API_URL);
+        if (!response.ok) throw new Error(`Estado ${response.status}`);
+        const data = await response.json();
+        zonesLayerGroup.clearLayers();
+        (data.zones || []).forEach((zone) => {
+            if (!zone.geojson) return;
+            const layer = L.geoJSON(zone.geojson, {
+                style: {
+                    color: zone.color || "#1e88e5",
+                    weight: 2,
+                    fillOpacity: 0.25,
+                },
+            });
+
+            // Mostrar nombre al pasar/click y permitir que el clic abra el modal de reporte
+            layer.bindTooltip(zone.name, { sticky: true });
+            layer.on("click", (e) => {
+                if (typeof handleMapClick === "function") {
+                    handleMapClick({ latlng: e.latlng });
+                }
+            });
+
+            zonesLayerGroup.addLayer(layer);
+        });
+        window.APP_ZONES = data.zones || [];
+        if (tempLocation) updateZoneInfo(tempLocation);
+    } catch (error) {
+        console.warn("No se pudieron cargar las zonas:", error);
+    }
+}
+
 async function saveReport(payload) {
     const response = await fetch(REPORTS_API_URL, {
         method: "POST",
@@ -297,6 +385,7 @@ async function start() {
         initMap();
         setupEventListeners();
         await loadExistingReports();
+        await loadZones();
     } catch (error) {
         console.error("Error al cargar el mapa:", error);
         alert("No se pudo cargar el mapa. Revisa la consola (F12) para mas detalles.");
