@@ -203,6 +203,7 @@ def find_zone_for_point(lat: Decimal, lng: Decimal):
     return None
 
 
+@login_required(login_url="/login/")
 @require_http_methods(["GET", "POST"])
 def reports_api(request):
     """Return or create reports backed by the Django database."""
