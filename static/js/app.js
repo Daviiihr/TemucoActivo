@@ -30,6 +30,8 @@ const addressExtraInput = document.getElementById("address-extra");
 const filterButtons = document.querySelectorAll(".BotonFiltro");
 const zoneInfoEl = document.getElementById("zone-info");
 
+const toggleZonesBtn = document.getElementById("btn-toggle-zones");
+
 function pointInRing(point, ring) {
     const [x, y] = point;
     let inside = false;
@@ -256,6 +258,9 @@ function filterMarkers(category) {
 }
 
 function setupEventListeners() {
+    // 1. Definimos el botón aquí mismo para asegurar que lo encuentre
+    const toggleZonesBtn = document.getElementById("btn-toggle-zones");
+
     // === Botones de Categoria (Modal) ===
     categoryButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -317,15 +322,46 @@ function setupEventListeners() {
         });
     }
 
-    // === Botones de Filtro ===
+    //Botones de Filtro (Categorías en el mapa)
     filterButtons.forEach((button) => {
         button.addEventListener("click", () => {
+            // Omitimos el botón de macrozonas en este loop para que no se comporte como filtro de categoría
+            if (button.id === 'btn-toggle-zones') return; 
+
+            filterButtons.forEach((btn) => {
+                if(btn.id !== 'btn-toggle-zones') btn.classList.remove("activo");
+            });
             filterButtons.forEach((btn) => btn.classList.remove("activo"));
             button.classList.add("activo");
             const categoryToFilter = button.dataset.category;
             filterMarkers(categoryToFilter);
         });
     });
+
+    //Lógica del Botón Mostrar/Ocultar Macrozonas
+    if (toggleZonesBtn) {
+        // Estado inicial: Activo (Azul relleno) porque las zonas cargan visibles
+        toggleZonesBtn.style.backgroundColor = "#0d6efd";
+        toggleZonesBtn.style.color = "#fff";
+
+        toggleZonesBtn.addEventListener("click", () => {
+            if (map.hasLayer(zonesLayerGroup)) {
+                // Si están visibles -> Ocultar
+                map.removeLayer(zonesLayerGroup);
+                
+                // Estilo desactivado (transparente con borde azul)
+                toggleZonesBtn.style.backgroundColor = "transparent";
+                toggleZonesBtn.style.color = "#0d6efd";
+            } else {
+                // Si están ocultas -> Mostrar
+                map.addLayer(zonesLayerGroup);
+                
+                // Estilo activo (azul relleno)
+                toggleZonesBtn.style.backgroundColor = "#0d6efd";
+                toggleZonesBtn.style.color = "#fff";
+            }
+        });
+    }
 }
 
 async function loadExistingReports() {
@@ -355,6 +391,10 @@ async function loadZones() {
             if (!zone.geojson) return;
 
             const layer = L.geoJSON(zone.geojson, {
+                pane: "paneSectors",   
+                renderer: sectorsRenderer,
+                interactive: false,
+                bubblingMouseEvents: false,
                 pane: "paneSectors",        // 👈 va al pane de sectores
                 renderer: sectorsRenderer,
                 interactive: false,         // 👈 no recibe clicks
@@ -366,6 +406,7 @@ async function loadZones() {
                 },
             });
 
+            // Etiqueta permanente con el nombre del macrosector
             // Etiqueta permanente con el nombre del macrosector (opcional pero bonito)
             layer.bindTooltip(zone.name, {
                 permanent: true,
