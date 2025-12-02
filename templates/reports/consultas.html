@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas SQL - Reportes por categoría</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'reports:home' %}">Comunidad Activa Temuco</a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-white-50 small">Sesión: {{ request.user.username }}</span>
+                <a class="btn btn-outline-light btn-sm" href="{% url 'reports:logout' %}">Cerrar sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h4 mb-3">Conteo de reportes por categoría (SQL directo)</h1>
+                <p class="text-muted mb-4">
+                    Consulta ejecutada con <code>SELECT</code>, <code>GROUP BY</code> y <code>ORDER BY</code> directamente en PostgreSQL.
+                </p>
+
+                {% if summary %}
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Categoría</th>
+                                <th class="text-end">Total de reportes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in summary %}
+                            <tr>
+                                <td>{{ row.category }}</td>
+                                <td class="text-end fw-bold">{{ row.total }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Aún no hay reportes para mostrar.
+                </div>
+                {% endif %}
+
+                <div class="mt-4">
+                    <h2 class="h6 text-muted">SQL utilizado</h2>
+                    <pre class="bg-light border rounded p-3 small">{{ sql_used }}</pre>
+                </div>
+            </div>
+        </div>
+        <a class="btn btn-primary" href="../../">Volver</a>
+    </div>
+</body>
+</html>
