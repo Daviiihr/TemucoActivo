@@ -6,6 +6,8 @@ const CSRF_TOKEN =
 let map;
 let tempLocation = null;
 let selectedCategory = null;
+let sectorsRenderer;
+let reportsRenderer;
 const categoryColors = {
     Vandalismo: "#E85141",
     "Zona de Riesgo": "#FFA500",
@@ -84,6 +86,20 @@ function initMap() {
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
     }).addTo(map);
+
+    // 🔹 Pane para SECTORES (polígonos)
+    map.createPane("paneSectors");
+    map.getPane("paneSectors").style.zIndex = 350;
+    map.getPane("paneSectors").style.pointerEvents = "none"; // que no capture clicks
+
+    // 🔹 Pane para REPORTES (marcadores)
+    map.createPane("paneReports");
+    map.getPane("paneReports").style.zIndex = 600; // encima de sectores y tile overlays
+    map.getPane("paneReports").style.pointerEvents = "auto";
+
+    // Renderers separados por pane para evitar que Leaflet reutilice el mismo SVG
+    sectorsRenderer = L.canvas({ pane: "paneSectors" }).addTo(map);
+    reportsRenderer = L.svg({ pane: "paneReports" }).addTo(map);
 
     map.on("click", handleMapClick);
     zonesLayerGroup.addTo(map);
@@ -199,13 +215,19 @@ async function autofillAddressFromMap(latlng) {
 
 function createPermanentReport(location, report) {
     const pinColor = categoryColors[report.category] || "#FE7569";
+
     const marker = L.circleMarker(location, {
+        pane: "paneReports",
+        renderer: reportsRenderer,
         radius: 9,
         color: "#000",
         weight: 1,
         fillColor: pinColor,
         fillOpacity: 0.9,
     }).addTo(map);
+
+    // Asegura que queda delante incluso si otro layer se añadió después
+    marker.bringToFront();
 
     marker.category = report.category;
     allMarkers.push(marker);
@@ -214,12 +236,12 @@ function createPermanentReport(location, report) {
     const popupHtml = `
         <div style="padding: 5px;">
             <h3 style="margin: 0 0 10px 0;">Reporte: ${report.category}</h3>
-            ${addressText ? `<p><strong>Direccion:</strong> ${addressText}</p>` : ""}
-            ${report.description ? `<p><strong>Descripcion:</strong> ${report.description}</p>` : ""}
-            <p style="font-size: 0.8em; color: grey;">
-                Ubicacion: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}
-            </p>
-        </div>`;
+            ${addressText ? `<p><strong>Dirección:</strong> ${addressText}</p>` : ""}
+            <p>${report.description || "Sin descripción"}</p>
+            <small>${new Date(report.created_at).toLocaleString()}</small>
+        </div>
+    `;
+
     marker.bindPopup(popupHtml);
 }
 
@@ -321,16 +343,22 @@ async function loadExistingReports() {
         console.warn("No se pudieron cargar los reportes iniciales:", error);
     }
 }
-
 async function loadZones() {
     try {
         const response = await fetch(ZONES_API_URL);
         if (!response.ok) throw new Error(`Estado ${response.status}`);
         const data = await response.json();
+
         zonesLayerGroup.clearLayers();
+
         (data.zones || []).forEach((zone) => {
             if (!zone.geojson) return;
+
             const layer = L.geoJSON(zone.geojson, {
+                pane: "paneSectors",        // 👈 va al pane de sectores
+                renderer: sectorsRenderer,
+                interactive: false,         // 👈 no recibe clicks
+                bubblingMouseEvents: false, // 👈 no bloquea eventos
                 style: {
                     color: zone.color || "#1e88e5",
                     weight: 2,
@@ -338,22 +366,23 @@ async function loadZones() {
                 },
             });
 
-            // Mostrar nombre al pasar/click y permitir que el clic abra el modal de reporte
-            layer.bindTooltip(zone.name, { sticky: true });
-            layer.on("click", (e) => {
-                if (typeof handleMapClick === "function") {
-                    handleMapClick({ latlng: e.latlng });
-                }
+            // Etiqueta permanente con el nombre del macrosector (opcional pero bonito)
+            layer.bindTooltip(zone.name, {
+                permanent: true,
+                direction: "center",
+                className: "zone-label",
             });
 
             zonesLayerGroup.addLayer(layer);
         });
+
         window.APP_ZONES = data.zones || [];
         if (tempLocation) updateZoneInfo(tempLocation);
     } catch (error) {
         console.warn("No se pudieron cargar las zonas:", error);
     }
 }
+
 
 async function saveReport(payload) {
     const response = await fetch(REPORTS_API_URL, {
@@ -384,8 +413,8 @@ async function start() {
     try {
         initMap();
         setupEventListeners();
-        await loadExistingReports();
         await loadZones();
+        await loadExistingReports();
     } catch (error) {
         console.error("Error al cargar el mapa:", error);
         alert("No se pudo cargar el mapa. Revisa la consola (F12) para mas detalles.");

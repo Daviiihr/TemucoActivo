@@ -2,6 +2,7 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth.models import User
 
 from .models import Report, Zone
 
@@ -15,6 +16,8 @@ class HomeViewTests(TestCase):
 
 class ReportsApiTests(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username="tester", password="pass1234")
+        self.client.login(username="tester", password="pass1234")
         Report.objects.create(
             category=Report.CATEGORY_VANDALISM,
             description="Rayados",

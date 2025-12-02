@@ -24,11 +24,6 @@ body {
     width: 100%;
     background-color: #e0e0e0;
 }
-/* Leaflet popup/marker z-index fix on top of modals */
-.leaflet-pane {
-    z-index: 100;
-}
-
 /* Nuevo Nombre: ModalOculto */
 .ModalOculto {
     display: none;

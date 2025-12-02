@@ -16,7 +16,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
+from .models import Report, Zone
 
 def clean_str(value, max_length):
     if value is None:
@@ -94,6 +94,62 @@ def zones_admin_api(request):
 
     zone = Zone.objects.create(name=name, color=color, geojson=geojson)
     return JsonResponse({"zone": serialize_zone(zone)}, status=201)
+
+@user_passes_test(_staff_check, login_url="/login/")
+@require_http_methods(["GET", "POST"])
+def zone_edit(request, zone_id):
+    """Editar una macrozona existente (solo staff/admin)."""
+    zone = Zone.objects.filter(id=zone_id).first()
+    if not zone:
+        return render(request, "404.html", status=404)
+
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+        color = (request.POST.get("color") or "#1e88e5").strip()[:20]
+        geojson_text = request.POST.get("geojson")
+
+        if name:
+            zone.name = name
+        zone.color = color
+
+        # Si quieres permitir editar el GeoJSON desde un textarea
+        if geojson_text:
+            try:
+                zone.geojson = json.loads(geojson_text)
+            except json.JSONDecodeError:
+                messages.error(request, "El GeoJSON no es válido.")
+                return redirect(request.path)
+
+        zone.save()
+        messages.success(request, "Macrozona actualizada correctamente.")
+        return redirect("reports:zones_admin")
+
+    # Para el formulario de edición
+    geojson_pretty = json.dumps(zone.geojson, ensure_ascii=False, indent=2) if zone.geojson else ""
+
+    return render(
+        request,
+        "reports/zone_edit.html",
+        {
+            "zone": zone,
+            "geojson_text": geojson_pretty,
+            "csrf_token": get_token(request),
+        },
+    )
+
+
+@user_passes_test(_staff_check, login_url="/login/")
+@require_http_methods(["POST"])
+def zone_delete(request, zone_id):
+    """Eliminar una macrozona (solo staff/admin)."""
+    zone = Zone.objects.filter(id=zone_id).first()
+    if not zone:
+        messages.error(request, "La macrozona no existe.")
+        return redirect("reports:zones_admin")
+
+    zone.delete()
+    messages.success(request, "Macrozona eliminada correctamente.")
+    return redirect("reports:zones_admin")
 
 
 @login_required(login_url="/login/")
@@ -203,6 +259,7 @@ def find_zone_for_point(lat: Decimal, lng: Decimal):
     return None
 
 
+@login_required(login_url="/login/")
 @require_http_methods(["GET", "POST"])
 def reports_api(request):
     """Return or create reports backed by the Django database."""
