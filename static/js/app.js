@@ -331,6 +331,7 @@ function setupEventListeners() {
             filterButtons.forEach((btn) => {
                 if(btn.id !== 'btn-toggle-zones') btn.classList.remove("activo");
             });
+            filterButtons.forEach((btn) => btn.classList.remove("activo"));
             button.classList.add("activo");
             const categoryToFilter = button.dataset.category;
             filterMarkers(categoryToFilter);
@@ -394,6 +395,10 @@ async function loadZones() {
                 renderer: sectorsRenderer,
                 interactive: false,
                 bubblingMouseEvents: false,
+                pane: "paneSectors",        // 👈 va al pane de sectores
+                renderer: sectorsRenderer,
+                interactive: false,         // 👈 no recibe clicks
+                bubblingMouseEvents: false, // 👈 no bloquea eventos
                 style: {
                     color: zone.color || "#1e88e5",
                     weight: 2,
@@ -402,6 +407,7 @@ async function loadZones() {
             });
 
             // Etiqueta permanente con el nombre del macrosector
+            // Etiqueta permanente con el nombre del macrosector (opcional pero bonito)
             layer.bindTooltip(zone.name, {
                 permanent: true,
                 direction: "center",
