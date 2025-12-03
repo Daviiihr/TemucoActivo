@@ -2,8 +2,9 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth.models import User
 
-from .models import Report
+from .models import Report, Zone
 
 
 class HomeViewTests(TestCase):
@@ -15,6 +16,8 @@ class HomeViewTests(TestCase):
 
 class ReportsApiTests(TestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username="tester", password="pass1234")
+        self.client.login(username="tester", password="pass1234")
         Report.objects.create(
             category=Report.CATEGORY_VANDALISM,
             description="Rayados",
@@ -44,3 +47,20 @@ class ReportsApiTests(TestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Report.objects.count(), 2)
+
+
+class ZonesApiTests(TestCase):
+    def setUp(self):
+        Zone.objects.create(
+            name="Centro",
+            color="#1e88e5",
+            geojson={"type": "Polygon", "coordinates": [[[0, 0], [0, 1], [1, 1], [0, 0]]]},
+        )
+
+    def test_zones_api_returns_active_zones(self):
+        response = self.client.get(reverse("reports:zones_api"))
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("zones", payload)
+        self.assertEqual(len(payload["zones"]), 1)
+        self.assertEqual(payload["zones"][0]["name"], "Centro")

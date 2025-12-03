@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Zonas - Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="h5 mb-3">Definir macro-zonas</h1>
+                <p class="text-muted small">
+                    Dibuja un polígono, asígnale un nombre y color, y guárdalo. Solo accesible para staff/admin.
+                </p>
+
+                <!-- Mapa -->
+                <div id="zones-map"
+                     class="mb-3"
+                     style="height: 420px; background: #e9ecef; border: 1px solid #dee2e6;">
+                </div>
+
+                <!-- Formulario de nueva zona -->
+                <form id="zone-form" class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" id="zone-name" class="form-control" placeholder="Ej: Centro" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Color</label>
+                        <input type="color" id="zone-color" class="form-control form-control-color" value="#1e88e5">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-success w-100" type="submit">Guardar</button>
+                    </div>
+                </form>
+
+                <div class="alert alert-info mt-3 small" id="zone-alert" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Zonas existentes</h2>
+                {% if zones %}
+                <ul class="list-group">
+                    {% for z in zones %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                        <!-- Nombre + fecha -->
+                        <div>
+                            <strong>{{ z.name }}</strong>
+                            <small class="text-muted">{{ z.created_at|date:"Y-m-d" }}</small>
+                        </div>
+
+                        <!-- Color + acciones -->
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill zone-color-dot"
+                                  data-color="{{ z.color|default:'#1e88e5' }}"
+                                  style="width:22px;height:22px;">&nbsp;</span>
+
+                            <a href="{% url 'reports:zone_edit' z.id %}"
+                               class="btn btn-sm btn-primary">Editar</a>
+
+                            <form method="post"
+                                  action="{% url 'reports:zone_delete' z.id %}"
+                                  onsubmit="return confirm('¿Eliminar esta macrozona?');"
+                                  class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-danger" type="submit">Eliminar</button>
+                            </form>
+                        </div>
+
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="alert alert-secondary">Aún no hay zonas creadas.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <a class="btn btn-primary" href="../../">Volver</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+<script>
+    // Inicializar mapa
+    const map = L.map("zones-map").setView([-38.7359, -72.5904], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19
+    }).addTo(map);
+
+    // Capa para lo dibujado
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
+
+    // Controles de dibujo
+    const drawControl = new L.Control.Draw({
+        draw: {
+            marker: false,
+            circle: false,
+            rectangle: false,
+            polyline: false,
+            circlemarker: false
+        },
+        edit: {
+            featureGroup: drawnItems
+        }
+    });
+    map.addControl(drawControl);
+
+    // Solo permitimos un polígono a la vez
+    map.on(L.Draw.Event.CREATED, function (e) {
+        drawnItems.clearLayers();
+        drawnItems.addLayer(e.layer);
+    });
+
+    // Alertita bootstrap
+    const alertBox = document.getElementById("zone-alert");
+    function showAlert(msg, kind="info") {
+        alertBox.textContent = msg;
+        alertBox.className = `alert alert-${kind} mt-3 small`;
+        alertBox.style.display = "block";
+        setTimeout(() => alertBox.style.display = "none", 3000);
+    }
+
+    // Enviar zona nueva al backend
+    document.getElementById("zone-form").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        const name = document.getElementById("zone-name").value.trim();
+        const color = document.getElementById("zone-color").value.trim();
+        const layer = drawnItems.getLayers()[0];
+
+        if (!layer) {
+            showAlert("Dibuja un polígono antes de guardar.", "warning");
+            return;
+        }
+
+        const geojson = layer.toGeoJSON();
+
+        try {
+            const resp = await fetch("{% url 'reports:zones_admin_api' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": window.CSRF_TOKEN,
+                },
+                body: JSON.stringify({ name, color, geojson }),
+            });
+            if (!resp.ok) throw new Error(`Estado ${resp.status}`);
+            showAlert("Zona guardada correctamente.", "success");
+            setTimeout(() => window.location.reload(), 800);
+        } catch (err) {
+            showAlert("No se pudo guardar la zona: " + err.message, "danger");
+        }
+    });
+
+    // Pintar el color de cada badge usando data-color
+    document.querySelectorAll(".zone-color-dot").forEach((el) => {
+        const color = el.dataset.color || "#1e88e5";
+        el.style.backgroundColor = color;
+    });
+</script>
+{% endblock %}

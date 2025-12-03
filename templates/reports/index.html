@@ -22,19 +22,33 @@
         <p>Haz clic en el mapa para reportar un incidente en tu barrio.</p>
         <h1>Bienvenido/a, {{ request.user.username }}</h1>
 
-        <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm rounded-5">
-            Cerrar sesión
-        </a>
+        <div class="d-flex gap-2">
+            {% if request.user.is_staff %}
+            <a href="{% url 'reports:zones_admin' %}" class="btn btn-warning btn-sm rounded-5">
+                Gestionar macro-zonas
+            </a>
+            {% endif %}
+            <a href="{% url 'reports:reports_sql_summary' %}" class="btn btn-light btn-sm rounded-5">
+                Ver consultas SQL
+            </a>
+            <a href="{% url 'reports:logout' %}" class="btn btn-danger btn-sm rounded-5">
+                Cerrar sesion
+            </a>
+        </div>
     </header>
 
     <div class="ContenedorFiltro">
-        <span>Filtrar por categoría:</span>
+        <span>Filtrar por categoria:</span>
         <button class="BotonFiltro activo" data-category="Todos">Todos</button>
-        <button class="BotonFiltro" data-category="Vandalismo">🚨 Vandalismo</button>
-        <button class="BotonFiltro" data-category="Zona de Riesgo">⚠️ Zona de Riesgo</button>
-        <button class="BotonFiltro" data-category="Accidente">🚑 Accidente</button>
-        <button class="BotonFiltro" data-category="Luminaria">💡 Luminaria</button>
-        <button class="BotonFiltro" data-category="Microbasural">🗑️ Microbasural</button>
+        <button class="BotonFiltro" data-category="Vandalismo">&#x1F9F1; Vandalismo</button>
+        <button class="BotonFiltro" data-category="Zona de Riesgo">&#9888;&#65039; Zona de Riesgo</button>
+        <button class="BotonFiltro" data-category="Accidente">&#x1F691; Accidente</button>
+        <button class="BotonFiltro" data-category="Luminaria">&#x1F4A1; Luminaria</button>
+        <button class="BotonFiltro" data-category="Microbasural">&#x1F5D1;&#65039; Microbasural</button>
+        
+        <div style="border-left: 2px solid #ccc; height: 30px; margin: 0 10px;"></div> <button id="btn-toggle-zones" class="BotonFiltro" style="border: 1px solid #0d6efd; color: #0d6efd;">
+            &#128506; Mostrar Macrozonas
+        </button>
     </div>
 
     <div id="map"></div>
@@ -42,14 +56,26 @@
     <div id="report-modal" class="ModalOculto">
         <div class="ContenidoModal">
             <h2>Crear Nuevo Reporte</h2>
-            <p>Selecciona una categoría y añade una descripción.</p>
+            <p>Selecciona una categoria, agrega direccion y descripcion.</p>
+            <div id="zone-info" class="zone-info text-muted small mb-2" aria-live="polite"></div>
             
             <div class="ContenedorBotonesCategoria">
-                <button class="BotonCategoria" data-category="Vandalismo"><span class="Icono">🚨</span> Vandalismo</button>
-                <button class="BotonCategoria" data-category="Zona de Riesgo"><span class="Icono">⚠️</span> Zona de Riesgo</button>
-                <button class="BotonCategoria" data-category="Accidente"><span class="Icono">🚑</span> Accidente</button>
-                <button class="BotonCategoria" data-category="Luminaria"><span class="Icono">💡</span> Luminaria</button>
-                <button class="BotonCategoria" data-category="Microbasural"><span class="Icono">🗑️</span> Microbasural</button>
+                <button class="BotonCategoria" data-category="Vandalismo"><span class="Icono">&#x1F9F1;</span> Vandalismo</button>
+                <button class="BotonCategoria" data-category="Zona de Riesgo"><span class="Icono">&#9888;&#65039;</span> Zona de Riesgo</button>
+                <button class="BotonCategoria" data-category="Accidente"><span class="Icono">&#x1F691;</span> Accidente</button>
+                <button class="BotonCategoria" data-category="Luminaria"><span class="Icono">&#x1F4A1;</span> Luminaria</button>
+                <button class="BotonCategoria" data-category="Microbasural"><span class="Icono">&#x1F5D1;&#65039;</span> Microbasural</button>
+            </div>
+
+            <div class="CamposDireccion d-grid gap-2 mt-3">
+                <h3 class="fs-6 mb-1">Direccion especifica</h3>
+                <div class="d-flex gap-2 flex-wrap">
+                    <input id="street-name" class="form-control flex-fill" type="text" placeholder="Nombre de la calle (ej: Av. Alemania)" maxlength="120">
+                    <input id="street-number" class="form-control" style="max-width: 140px;" type="text" placeholder="Numero" maxlength="20">
+                </div>
+                <input id="apartment" class="form-control" type="text" placeholder="Departamento, torre o casa (opcional)" maxlength="50">
+                <input id="address-extra" class="form-control" type="text" placeholder="Referencia adicional (frente a plaza, esquina, etc)" maxlength="120">
+                <small class="text-muted">Mientras mas detalles de direccion agregues, mas facil sera ubicar el incidente.</small>
             </div>
 
             <textarea id="report-description" placeholder="Agrega una descripcion (opcional)..."></textarea>
@@ -66,7 +92,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="{% static 'js/app.js' %}"></script>
+    <script src="{% static 'js/app.js' %}?v=zones4"></script>
 
 </body>
 </html>
